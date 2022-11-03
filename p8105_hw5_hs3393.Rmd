@@ -1,0 +1,48 @@
+---
+title: "p8105_hw5_hs3393"
+author: "Haochen Sun"
+date: "2022-11-03"
+output: github_document
+---
+
+```{r pload packages, message=FALSE}
+library(tidyverse)
+library(ggplot2)
+```
+
+## Problem 1
+```{r}
+```
+
+## Problem 2
+```{r problem 2}
+data <- read_csv("data/homicide-data.csv")
+head(data)
+```
+
+The data describes `r nrow(data)` criminal homicides. The dataset includes the id, report date of homicides, the victims' race, name, gender, age, as well as the place where the homicide happened, specified to city, state, longtitude and latitude. Also, the data despcribes the result of the homicide (whether it is closed and someone is arrested).
+
+```{r, prob2 data manipulation}
+casenum <- data %>% 
+  janitor::clean_names() %>% 
+  unite("city_state", c(city, state), sep = ", ", remove = F) %>%
+  mutate(solve = if_else(
+    disposition != "Closed by arrest",
+    true = "unsolved", false = "solved"
+  )) %>% 
+  group_by(city_state, solve) %>% 
+  summarise(case = n()) %>% 
+  pivot_wider(names_from = solve, values_from = case) %>% 
+  mutate(total = solved + unsolved)
+
+Baltimore <- filter(casenum, city_state == "Baltimore, MD")
+
+Baltimore_result <- prop.test(Baltimore[["unsolved"]], Baltimore[["total"]]) %>% 
+  broom::tidy() %>% 
+  select(estimate, conf.low, conf.high)
+```
+
+For Baltimore,MD, the estimated proportion of unsolved homicides will be `r round(pull(Baltimore_result, estimate), digits = 4)`, the confidence interval will be `r str_c("(", round(pull(Baltimore_result, conf.low), digits = 4), ",", round(pull(Baltimore_result, conf.high), digits = 4), ")")`.
+
+
+
