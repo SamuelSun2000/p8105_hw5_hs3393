@@ -45,4 +45,20 @@ Baltimore_result <- prop.test(Baltimore[["unsolved"]], Baltimore[["total"]]) %>%
 For Baltimore,MD, the estimated proportion of unsolved homicides will be `r round(pull(Baltimore_result, estimate), digits = 4)`, the confidence interval will be `r str_c("(", round(pull(Baltimore_result, conf.low), digits = 4), ",", round(pull(Baltimore_result, conf.high), digits = 4), ")")`.
 
 
+```{r prop.test for every city}
+casenum %>% 
+  filter(city_state != "Tulsa, AL") %>% 
+  # This is because Tulsa, AL only have 1 sample! Not enough for a proportion test, so just leave it out
+  
+  mutate(
+    prop_test = map2(.x = unsolved, .y = total, ~prop.test(x = .x, n = .y))
+    ) %>% 
+  mutate(
+    prop_test = map(prop_test, broom::tidy)
+  ) %>% 
+  unnest(prop_test) %>% 
+  select(city_state:estimate, conf.low, conf.high)
+```
+
+
 
