@@ -84,5 +84,56 @@ casenum %>%
   labs(y = "Estimate proportion", x = "City", title = "Estimated proportion of unsolved homicides in each city")
 ```
 
+## Problem 3
+```{r simulation}
+sim_df = 
+  expand_grid(
+    id = 1:5000,
+    mean = 0:6
+  ) %>% 
+  mutate(
+  sets = map(.x = mean, ~rnorm(n = 30, mean = .x, sd = 5 ))
+    ) %>% 
+  mutate(t_result = map(sets, t.test)) %>% 
+  mutate(t_result = map(t_result,  broom::tidy)) %>%
+  unnest(t_result) %>% 
+  select(id, mean, estimate, p.value)
+
+sim_df %>% 
+  mutate(decision = if_else(p.value < 0.05, true = "reject", false = "fail_to_rej")) %>%
+  filter(decision == "reject") %>% 
+  group_by(mean) %>% 
+  summarise(power = n()/5000) %>% 
+  ggplot(aes(x = mean, y = power)) + 
+  geom_point() + 
+  geom_smooth(method = "loess", se = F) +
+  labs(x = "True mean", y = "Power", title = "Power of test vs True mean")
+  
+```
+
+As the true value of $\mu$ increases, the power of test also increases.
+
+```{r simulation2}
+
+plot1 <- sim_df %>% 
+  mutate(decision = if_else(p.value < 0.05, true = "reject", false = "fail_to_rej")) %>% 
+  group_by(mean) %>% 
+  summarise(average = mean(estimate)) %>% 
+  ggplot(aes(x = mean, y = average)) +
+  geom_point() +
+  geom_smooth(method = "loess", se = F)
+  
+
+
+  
+plot2 <- sim_df %>% 
+  mutate(decision = if_else(p.value < 0.05, true = "reject", false = "fail_to_rej")) %>% 
+  filter(decision == "reject") %>% 
+  group_by(mean) %>% 
+  summarise(rej_average = mean(estimate)) %>% 
+  ggplot(aes(x = mean, y = rej_average)) +
+  geom_point() +
+  geom_smooth(method = "loess", se = F)
+```
 
 
