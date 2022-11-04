@@ -8,11 +8,11 @@ output: github_document
 ```{r pload packages, message=FALSE}
 library(tidyverse)
 library(ggplot2)
+library(patchwork)
 
 knitr::opts_chunk$set(
-  fig.width = 6,
-  fig.asp = .6,
-  out.width = "90%"
+  fig.width = 8,
+  out.width = "70%"
 )
 
 theme_set(theme_minimal() + theme(legend.position = "bottom"))
@@ -121,7 +121,9 @@ plot1 <- sim_df %>%
   summarise(average = mean(estimate)) %>% 
   ggplot(aes(x = mean, y = average)) +
   geom_point() +
-  geom_smooth(method = "loess", se = F)
+  geom_smooth(method = "loess", se = F) + 
+  labs(x = "True Mean", y = "Estimated Mean",
+       title = "All Samples")
   
 
 
@@ -130,10 +132,21 @@ plot2 <- sim_df %>%
   mutate(decision = if_else(p.value < 0.05, true = "reject", false = "fail_to_rej")) %>% 
   filter(decision == "reject") %>% 
   group_by(mean) %>% 
-  summarise(rej_average = mean(estimate)) %>% 
+  summarise(
+    count = n(),
+    rej_average = mean(estimate)) %>% 
   ggplot(aes(x = mean, y = rej_average)) +
   geom_point() +
-  geom_smooth(method = "loess", se = F)
+  geom_smooth(method = "loess", se = F) +
+  labs(x = "True Mean", y = "Rejected Samples Estimated Mean",
+       title = "Null Rejected Samples")
+
+plot1 + plot2
 ```
 
+The average of $\hat{\mu}$ in samples for which the null was rejected is not approximately equal to the true $\mu$ when the true $\mu$ is close to the $\mu$ in the null hypothesis. But when the true $\mu$ is not close to the $\mu$ in the null hypothesis, they will be approximately equal.
+
+That is because under this circumstance, the sample distribution have much overlap with the distribution of null hypothesis. Therefore, those samples close to the mean in $H_0$ will not be rejected. Then the distribution of samples for which null was rejected will not be symmetric to the true mean, there will be more samples on the side that are far away from the mean in $H_0$. For example, the mean of the samples for which null was rejected, whose real mean is 1, will be larger than 1. 0 is an exception even though 0 is exactly the same as the mean in $H_0$, because the rejected samples will be those that further away from 0, but these samples contains positive and negative ones and are approximately symmetric to zero, therefore the mean of these samples will be close to 0 (the true mean). 
+
+When the true mean is far from the mean in null hypothesis, nearly all samples will reject $H_0$ so the mean of samples for which the null was rejected will approximately equal to the true value of $\mu$. (In this problem, for example, when true mean is equal to 0).
 
