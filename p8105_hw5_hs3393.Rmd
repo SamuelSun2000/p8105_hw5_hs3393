@@ -11,8 +11,8 @@ library(ggplot2)
 library(patchwork)
 
 knitr::opts_chunk$set(
-  fig.width = 6,
-  out.width = "80%"
+  fig.width = 5,
+  out.width = "60%"
 )
 
 theme_set(theme_minimal() + theme(legend.position = "bottom"))
